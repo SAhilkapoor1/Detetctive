@@ -8,7 +8,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 
 # Render Environment Variables
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-PORT = int(os.environ.get("PORT", 10000))
+PORT = int(os.environ.get("PORT", 8080))
 
 # Dummy HTTP Server taaki Render ka Port requirement satisfy ho jaye
 class HealthCheckHandler(BaseHTTPRequestHandler):
