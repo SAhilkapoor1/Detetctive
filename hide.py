@@ -1,13 +1,26 @@
 import os
 import random
 import time
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-# Environment Variables
+# Render Environment Variables
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-PORT = int(os.environ.get("PORT", 10000))
-WEBHOOK_URL = os.environ.get("RENDER_EXTERNAL_URL")  # Render automatically provides this for Web Services
+PORT = int(os.environ.get("PORT", 8080))
+
+# 1. Dummy HTTP Server taaki Render ka Port requirement satisfy ho jaye (Webhook nahi hai yeh)
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running via Polling!")
+
+def start_dummy_server():
+    server = HTTPServer(('0.0.0.0', PORT), HealthCheckHandler)
+    print(f"🌐 Dummy web server listening on port {PORT}...")
+    server.serve_forever()
 
 group_solo_cases = {}     
 group_solo_players = {}   
@@ -299,6 +312,13 @@ def main():
         print("Error: TELEGRAM_BOT_TOKEN environment variable not set!")
         return
 
+    # Start dummy server in a background thread to satisfy Render port binding
+    server_thread = threading.Thread(target=start_server_loop, daemon=True)
+    # Let's map target to start_dummy_server
+    
+    server_thread = threading.Thread(target=start_dummy_server, daemon=True)
+    server_thread.start()
+
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start_command))
@@ -307,20 +327,8 @@ def main():
     app.add_handler(CommandHandler("arrest", arrest_command))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
-    if WEBHOOK_URL:
-        # Render Web Service ke liye Webhook mode + Port binding
-        print(f"🤖 Starting bot in Webhook mode on port {PORT}...")
-        app.run_webhook(
-            listen="0.0.0.0",
-            port=PORT,
-            secret_token="forensic_secret_token",
-            url_path=TOKEN,
-            webhook_url=f"{WEBHOOK_URL}/{TOKEN}"
-        )
-    else:
-        # Local development ke liye Polling mode
-        print("🤖 Starting bot in Polling mode...")
-        app.run_polling()
+    print("🤖 Telegram Bot is running in Polling mode with port binding...")
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
