@@ -4,8 +4,10 @@ import time
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-# Render Environment Variable se token uthayega
+# Environment Variables
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+PORT = int(os.environ.get("PORT", 10000))
+WEBHOOK_URL = os.environ.get("RENDER_EXTERNAL_URL")  # Render automatically provides this for Web Services
 
 group_solo_cases = {}     
 group_solo_players = {}   
@@ -305,8 +307,20 @@ def main():
     app.add_handler(CommandHandler("arrest", arrest_command))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
-    print("🤖 Telegram Bot is running and polling from Render configuration...")
-    app.run_polling()
+    if WEBHOOK_URL:
+        # Render Web Service ke liye Webhook mode + Port binding
+        print(f"🤖 Starting bot in Webhook mode on port {PORT}...")
+        app.run_webhook(
+            listen="0.0.0.0",
+            port=PORT,
+            secret_token="forensic_secret_token",
+            url_path=TOKEN,
+            webhook_url=f"{WEBHOOK_URL}/{TOKEN}"
+        )
+    else:
+        # Local development ke liye Polling mode
+        print("🤖 Starting bot in Polling mode...")
+        app.run_polling()
 
 if __name__ == "__main__":
     main()
