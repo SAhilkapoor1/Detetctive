@@ -8,9 +8,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 
 # Render Environment Variables
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-PORT = int(os.environ.get("PORT", 8080))
+PORT = int(os.environ.get("PORT", 10000))
 
-# 1. Dummy HTTP Server taaki Render ka Port requirement satisfy ho jaye (Webhook nahi hai yeh)
+# Dummy HTTP Server taaki Render ka Port requirement satisfy ho jaye
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -312,10 +312,6 @@ def main():
         print("Error: TELEGRAM_BOT_TOKEN environment variable not set!")
         return
 
-    # Start dummy server in a background thread to satisfy Render port binding
-    server_thread = threading.Thread(target=start_server_loop, daemon=True)
-    # Let's map target to start_dummy_server
-    
     server_thread = threading.Thread(target=start_dummy_server, daemon=True)
     server_thread.start()
 
